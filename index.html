@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniService POS - Comprehensive Service Management & Checkout</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            },
+            accent: {
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .print-only {
+      display: none;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #receipt-modal-content, #receipt-modal-content * {
+        visibility: visible;
+      }
+      #receipt-modal-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        color: #000 !important;
+        background: #fff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="h-full font-sans antialiased flex overflow-hidden text-slate-200 bg-slate-950">
+
+  <!-- Main Outer Container -->
+  <div class="flex h-screen w-full overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between flex-shrink-0 transition-all duration-300 z-20">
+      <div>
+        <!-- Brand Header -->
+        <div class="h-16 flex items-center px-6 border-b border-slate-800 justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-brand-500/10 text-brand-400 rounded-xl border border-brand-500/20">
+              <i data-lucide="scissors" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h1 class="font-bold text-lg text-white leading-tight">ApexPOS</h1>
+              <p class="text-xs text-slate-400">Service Suite</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="p-4 space-y-1.5" id="main-nav">
+          <button data-target="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-brand-400 bg-brand-500/10 border border-brand-500/20">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </button>
+          
+          <button data-target="pos" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+            <span>POS Register</span>
+            <span id="cart-badge" class="ml-auto bg-brand-500 text-slate-950 text-xs px-2 py-0.5 rounded-full font-bold hidden">0</span>
+          </button>
+
+          <button data-target="appointments" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white">
+            <i data-lucide="calendar" class="w-5 h-5"></i>
+            <span>Appointments</span>
+          </button>
+
+          <button data-target="services" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white">
+            <i data-lucide="wrench" class="w-5 h-5"></i>
+            <span>Services Catalog</span>
+          </button>
+
+          <button data-target="customers" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Customers CRM</span>
+          </button>
+
+          <button data-target="staff" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white">
+            <i data-lucide="user-check" class="w-5 h-5"></i>
+            <span>Staff & Roster</span>
+          </button>
+
+          <button data-target="reports" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            <span>Reports & Insights</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Footer / Store Status -->
+      <div class="p-4 border-t border-slate-800">
+        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span class="text-xs text-slate-300 font-medium" id="store-name-display">Apex Studio</span>
+          </div>
+          <button id="open-settings-btn" class="text-slate-400 hover:text-white transition">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
+
+      <!-- Top Header Bar -->
+      <header class="h-16 bg-slate-900/80 border-b border-slate-800 px-6 flex items-center justify-between backdrop-blur flex-shrink-0">
+        <div class="flex items-center space-x-4">
+          <button id="toggle-sidebar-btn" class="text-slate-400 hover:text-white focus:outline-none">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+          <div class="relative w-64 md:w-80">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="global-search" placeholder="Search services, clients, bookings..." class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-4 py-1.5 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <button id="quick-checkout-top-btn" class="hidden sm:flex items-center space-x-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Express Register</span>
+          </button>
+          <div class="h-6 w-px bg-slate-800"></div>
+          <div class="text-right hidden md:block">
+            <p id="current-date-display" class="text-xs font-semibold text-slate-200"></p>
+            <p id="current-time-display" class="text-[10px] text-slate-400"></p>
+          </div>
+        </div>
+      </header>
+
+      <!-- View Sections Wrapper -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-6 relative" id="content-views">
+
+        <!-- VIEW 1: DASHBOARD -->
+        <section id="view-dashboard" class="view-panel space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Service Business Overview</h2>
+              <p class="text-slate-400 text-sm">Real-time daily metrics, scheduled appointments, and earnings</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button data-target="appointments" class="nav-trigger bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded-xl text-sm text-slate-200 font-medium transition flex items-center space-x-2">
+                <i data-lucide="calendar-plus" class="w-4 h-4 text-brand-400"></i>
+                <span>Book Appointment</span>
+              </button>
+              <button data-target="pos" class="nav-trigger bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl text-sm text-slate-950 font-bold transition flex items-center space-x-2">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                <span>Open POS</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Today's Revenue</span>
+                <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl"><i data-lucide="dollar-sign" class="w-5 h-5"></i></div>
+              </div>
+              <div class="mt-4">
+                <h3 class="text-2xl font-bold text-white" id="stat-revenue">$0.00</h3>
+                <p class="text-xs text-emerald-400 mt-1 flex items-center"><i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> +14% vs yesterday</p>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Services Rendered</span>
+                <div class="p-2 bg-accent-500/10 text-accent-400 rounded-xl"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
+              </div>
+              <div class="mt-4">
+                <h3 class="text-2xl font-bold text-white" id="stat-services-count">0</h3>
+                <p class="text-xs text-slate-400 mt-1">Completed tickets today</p>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Appointments Today</span>
+                <div class="p-2 bg-amber-500/10 text-amber-400 rounded-xl"><i data-lucide="clock" class="w-5 h-5"></i></div>
+              </div>
+              <div class="mt-4">
+                <h3 class="text-2xl font-bold text-white" id="stat-appointments-count">0</h3>
+                <p class="text-xs text-amber-400 mt-1" id="stat-pending-count">0 pending execution</p>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Avg Ticket Value</span>
+                <div class="p-2 bg-purple-500/10 text-purple-400 rounded-xl"><i data-lucide="receipt" class="w-5 h-5"></i></div>
+              </div>
+              <div class="mt-4">
+                <h3 class="text-2xl font-bold text-white" id="stat-avg-ticket">$0.00</h3>
+                <p class="text-xs text-slate-400 mt-1">Based on today's total</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Dashboard Sections -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Upcoming Schedule Today -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+                  <i data-lucide="calendar" class="w-5 h-5 text-brand-400"></i>
+                  <span>Today's Appointment Queue</span>
+                </h3>
+                <button data-target="appointments" class="nav-trigger text-xs text-brand-400 hover:underline">View All</button>
+              </div>
+              
+              <div id="dashboard-schedule-list" class="space-y-3">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Right: Top Services & Quick Staff Performance -->
+            <div class="space-y-6">
+              <!-- Top Services Widget -->
+              <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <h3 class="font-bold text-slate-100 border-b border-slate-800 pb-3 flex items-center space-x-2">
+                  <i data-lucide="flame" class="w-5 h-5 text-amber-400"></i>
+                  <span>Popular Services Today</span>
+                </h3>
+                <div id="top-services-list" class="space-y-3">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+              <!-- Quick Action Box -->
+              <div class="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/60 rounded-2xl p-5 space-y-3 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl pointer-events-none"></div>
+                <h4 class="font-bold text-white text-base">New Client Walk-in?</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">Instantly add items to cart, select staff, apply custom add-ons or discounts, and take payment.</p>
+                <button data-target="pos" class="nav-trigger w-full mt-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+                  <i data-lucide="zap" class="w-4 h-4"></i>
+                  <span>Launch Express Checkout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 2: POS REGISTER -->
+        <section id="view-pos" class="view-panel hidden h-full">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[650px]">
+
+            <!-- Left: Catalog & Category Selector (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col h-full space-y-4">
+              <!-- Filter Bar & Search -->
+              <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex flex-wrap gap-2 items-center justify-between">
+                <div class="relative flex-1 min-w-[200px]">
+                  <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                  <input type="text" id="pos-search-input" placeholder="Search service name or code..." class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-brand-500">
+                </div>
+                <div id="pos-category-filters" class="flex items-center space-x-1.5 overflow-x-auto pb-1 max-w-full">
+                  <!-- Injected categories dynamically -->
+                </div>
+              </div>
+
+              <!-- Services Grid -->
+              <div id="pos-services-grid" class="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3.5 pr-1">
+                <!-- Injected service cards -->
+              </div>
+            </div>
+
+            <!-- Right: Current Service Ticket / Cart (5 cols) -->
+            <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between overflow-hidden">
+              <!-- Cart Header & Customer Selection -->
+              <div class="p-4 border-b border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-brand-400"></i>
+                    <h3 class="font-bold text-white text-base">Current Service Ticket</h3>
+                  </div>
+                  <button id="clear-cart-btn" class="text-xs text-rose-400 hover:text-rose-300 transition flex items-center space-x-1">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span>Clear</span>
+                  </button>
+                </div>
+
+                <!-- Customer Picker -->
+                <div class="flex items-center space-x-2">
+                  <div class="relative flex-1">
+                    <select id="pos-customer-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                      <option value="">-- Walk-in Client --</option>
+                      <!-- Dynamically filled -->
+                    </select>
+                  </div>
+                  <button id="btn-quick-add-customer" class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-xl border border-slate-700 transition" title="New Customer">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Cart Items List -->
+              <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Dynamic Items or Empty State -->
+              </div>
+
+              <!-- Cart Calculation Footer -->
+              <div class="p-4 border-t border-slate-800 bg-slate-900/90 space-y-3">
+                <!-- Discounts & Tips Adjustments -->
+                <div class="space-y-2 border-b border-slate-800/80 pb-3">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Discount Option</span>
+                    <div class="flex items-center space-x-1">
+                      <input type="number" id="pos-discount-input" placeholder="0" min="0" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-right text-xs focus:outline-none focus:border-brand-500">
+                      <select id="pos-discount-type" class="bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-xs text-slate-300">
+                        <option value="flat">$</option>
+                        <option value="percent">%</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Staff Tip</span>
+                    <div class="flex items-center space-x-1">
+                      <button data-tip="15" class="tip-preset-btn text-[10px] bg-slate-800 border border-slate-700 px-2 py-1 rounded hover:bg-slate-700">15%</button>
+                      <button data-tip="18" class="tip-preset-btn text-[10px] bg-slate-800 border border-slate-700 px-2 py-1 rounded hover:bg-slate-700">18%</button>
+                      <button data-tip="20" class="tip-preset-btn text-[10px] bg-slate-800 border border-slate-700 px-2 py-1 rounded hover:bg-slate-700">20%</button>
+                      <input type="number" id="pos-tip-custom" placeholder="$ Tip" class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-right text-xs focus:outline-none focus:border-brand-500">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Totals Breakdown -->
+                <div class="space-y-1 text-xs">
+                  <div class="flex justify-between text-slate-400">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0.00</span>
+                  </div>
+                  <div class="flex justify-between text-slate-400">
+                    <span>Tax (<span id="tax-rate-display">8</span>%)</span>
+                    <span id="cart-tax">$0.00</span>
+                  </div>
+                  <div class="flex justify-between text-slate-400" id="cart-discount-row">
+                    <span>Discount</span>
+                    <span id="cart-discount" class="text-emerald-400">-$0.00</span>
+                  </div>
+                  <div class="flex justify-between text-slate-400">
+                    <span>Tip</span>
+                    <span id="cart-tip">$0.00</span>
+                  </div>
+                  <div class="flex justify-between text-base font-bold text-white pt-2 border-t border-slate-800">
+                    <span>Total Due</span>
+                    <span id="cart-total" class="text-brand-400">$0.00</span>
+                  </div>
+                </div>
+
+                <!-- Checkout Action Button -->
+                <button id="btn-proceed-checkout" class="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold py-3 rounded-xl text-sm transition flex items-center justify-center space-x-2">
+                  <i data-lucide="credit-card" class="w-4 h-4"></i>
+                  <span>Pay & Complete Transaction</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- VIEW 3: APPOINTMENTS & SCHEDULING -->
+        <section id="view-appointments" class="view-panel hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Appointment Schedule</h2>
+              <p class="text-slate-400 text-sm">Manage client bookings, staff assignments, and service timelines</p>
+            </div>
+            <button id="btn-add-appointment" class="bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition flex items-center space-x-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>New Appointment</span>
+            </button>
+          </div>
+
+          <!-- Filter & View Controls -->
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <input type="date" id="appointment-date-picker" class="bg-slate-800 border border-slate-700 text-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-brand-500">
+              <select id="appointment-staff-filter" class="bg-slate-800 border border-slate-700 text-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-brand-500">
+                <option value="ALL">All Staff Members</option>
+              </select>
+            </div>
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-amber-500/20 border border-amber-500/50 rounded-full"></span><span class="text-slate-400">Scheduled</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-indigo-500/20 border border-indigo-500/50 rounded-full"></span><span class="text-slate-400">In-Progress</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-3 h-3 bg-emerald-500/20 border border-emerald-500/50 rounded-full"></span><span class="text-slate-400">Completed</span></span>
+            </div>
+          </div>
+
+          <!-- Timeline Container -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 overflow-x-auto">
+            <div id="appointments-timeline-grid" class="min-w-[800px] space-y-3">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 4: SERVICES CATALOG -->
+        <section id="view-services" class="view-panel hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Services & Pricing Menu</h2>
+              <p class="text-slate-400 text-sm">Configure your service offerings, rates, durations, and add-ons</p>
+            </div>
+            <button id="btn-add-service" class="bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition flex items-center space-x-2">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Create New Service</span>
+            </button>
+          </div>
+
+          <!-- Services List Table -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm text-slate-300">
+                <thead class="bg-slate-800/60 text-xs font-semibold uppercase text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="py-3.5 px-4">Service Name</th>
+                    <th class="py-3.5 px-4">Category</th>
+                    <th class="py-3.5 px-4">Duration</th>
+                    <th class="py-3.5 px-4">Price</th>
+                    <th class="py-3.5 px-4">Assigned Staff</th>
+                    <th class="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="services-table-body" class="divide-y divide-slate-800">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 5: CUSTOMER CRM -->
+        <section id="view-customers" class="view-panel hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Customer Relationship Management</h2>
+              <p class="text-slate-400 text-sm">Track customer visit history, preferences, and loyalty points</p>
+            </div>
+            <button id="btn-add-customer-crm" class="bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition flex items-center space-x-2">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Add New Client</span>
+            </button>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+            <input type="text" id="customer-search-input" placeholder="Search clients by name, phone or email..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+
+          <!-- Customer Grid Cards -->
+          <div id="customers-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Injected via JS -->
+          </div>
+        </section>
+
+        <!-- VIEW 6: STAFF & ROSTER -->
+        <section id="view-staff" class="view-panel hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Staff & Team Roster</h2>
+              <p class="text-slate-400 text-sm">Commission management, individual sales tracking, and roles</p>
+            </div>
+            <button id="btn-add-staff" class="bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition flex items-center space-x-2">
+              <i data-lucide="user-check" class="w-4 h-4"></i>
+              <span>Add Staff Member</span>
+            </button>
+          </div>
+
+          <div id="staff-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Injected via JS -->
+          </div>
+        </section>
+
+        <!-- VIEW 7: REPORTS & ANALYTICS -->
+        <section id="view-reports" class="view-panel hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Reports & Revenue Analytics</h2>
+              <p class="text-slate-400 text-sm">Analyze service performance, staff commission splits, and sales trends</p>
+            </div>
+            <button id="btn-export-reports" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition flex items-center space-x-2">
+              <i data-lucide="download" class="w-4 h-4 text-brand-400"></i>
+              <span>Export Sales CSV</span>
+            </button>
+          </div>
+
+          <!-- Chart Cards -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
+              <h3 class="font-bold text-slate-200 text-sm">Revenue Distribution by Category</h3>
+              <div class="h-64 relative">
+                <canvas id="chart-sales-category"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4">
+              <h3 class="font-bold text-slate-200 text-sm">Commission Earned per Staff Member</h3>
+              <div class="h-64 relative">
+                <canvas id="chart-staff-commission"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transaction Log -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h3 class="font-bold text-white text-base">Completed Transactions History</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-800/80 text-slate-400 uppercase border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Receipt ID</th>
+                    <th class="py-3 px-4">Time</th>
+                    <th class="py-3 px-4">Client</th>
+                    <th class="py-3 px-4">Services Rendered</th>
+                    <th class="py-3 px-4">Payment Method</th>
+                    <th class="py-3 px-4 text-right">Total Amount</th>
+                    <th class="py-3 px-4 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="transaction-history-table" class="divide-y divide-slate-800">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL 1: CHECKOUT & PAYMENT MODAL -->
+  <div id="modal-checkout" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl space-y-5 p-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div>
+          <h3 class="font-bold text-lg text-white">Payment Checkout</h3>
+          <p class="text-xs text-slate-400">Select payment breakdown method</p>
+        </div>
+        <button class="close-modal text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="bg-slate-800/60 p-4 rounded-xl space-y-2 border border-slate-700/50">
+        <div class="flex justify-between text-sm text-slate-300">
+          <span>Client:</span>
+          <span id="checkout-modal-client-name" class="font-semibold text-white">Walk-in</span>
+        </div>
+        <div class="flex justify-between text-lg font-bold text-brand-400 pt-2 border-t border-slate-700">
+          <span>Amount Due:</span>
+          <span id="checkout-modal-total-amount">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Payment Method Selection -->
+      <div class="space-y-3">
+        <label class="text-xs font-semibold text-slate-300">Select Payment Method</label>
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" data-method="Cash" class="payment-method-btn flex items-center space-x-2 p-3 bg-slate-800 border border-slate-700 hover:border-brand-500 rounded-xl text-xs text-white font-medium transition active">
+            <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
+            <span>Cash</span>
+          </button>
+          <button type="button" data-method="Credit Card" class="payment-method-btn flex items-center space-x-2 p-3 bg-slate-800 border border-slate-700 hover:border-brand-500 rounded-xl text-xs text-white font-medium transition">
+            <i data-lucide="credit-card" class="w-4 h-4 text-accent-400"></i>
+            <span>Credit / Debit Card</span>
+          </button>
+          <button type="button" data-method="Mobile Pay" class="payment-method-btn flex items-center space-x-2 p-3 bg-slate-800 border border-slate-700 hover:border-brand-500 rounded-xl text-xs text-white font-medium transition">
+            <i data-lucide="smartphone" class="w-4 h-4 text-amber-400"></i>
+            <span>Mobile Pay / QR</span>
+          </button>
+          <button type="button" data-method="Gift Card" class="payment-method-btn flex items-center space-x-2 p-3 bg-slate-800 border border-slate-700 hover:border-brand-500 rounded-xl text-xs text-white font-medium transition">
+            <i data-lucide="gift" class="w-4 h-4 text-purple-400"></i>
+            <span>Gift Voucher</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-semibold text-slate-300">Notes / Transaction Reference</label>
+        <input type="text" id="checkout-notes" placeholder="e.g. Card last 4 digits, custom reference..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+      </div>
+
+      <div class="flex items-center space-x-3 pt-3">
+        <button class="close-modal flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl text-xs transition">Cancel</button>
+        <button id="btn-confirm-payment" class="flex-1 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">Complete Sale</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: PRINTABLE RECEIPT PREVIEW -->
+  <div id="modal-receipt" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl p-6 space-y-4">
+      
+      <!-- Receipt Printable Sheet -->
+      <div id="receipt-modal-content" class="bg-white text-slate-900 p-6 rounded-xl space-y-4 text-xs font-mono">
+        <div class="text-center space-y-1">
+          <h2 id="receipt-biz-name" class="font-bold text-base uppercase text-slate-950">Apex Studio & Salon</h2>
+          <p id="receipt-biz-address" class="text-[11px] text-slate-600">124 Main Street, Suite 400</p>
+          <p id="receipt-biz-phone" class="text-[11px] text-slate-600">Ph: (555) 019-2831</p>
+        </div>
+
+        <div class="border-t border-b border-dashed border-slate-300 py-2 space-y-1 text-[11px]">
+          <div class="flex justify-between">
+            <span>Receipt #:</span>
+            <span id="receipt-id">#0000</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Date:</span>
+            <span id="receipt-date">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Client:</span>
+            <span id="receipt-client">--</span>
+          </div>
+        </div>
+
+        <div id="receipt-items-list" class="space-y-1.5 border-b border-dashed border-slate-300 pb-3">
+          <!-- Dynamically filled -->
+        </div>
+
+        <div class="space-y-1 text-right text-[11px]">
+          <div class="flex justify-between"><span>Subtotal:</span><span id="receipt-subtotal">$0.00</span></div>
+          <div class="flex justify-between"><span>Tax:</span><span id="receipt-tax">$0.00</span></div>
+          <div class="flex justify-between text-slate-600"><span>Discount:</span><span id="receipt-discount">-$0.00</span></div>
+          <div class="flex justify-between"><span>Tip:</span><span id="receipt-tip">$0.00</span></div>
+          <div class="flex justify-between font-bold text-sm text-slate-950 pt-1 border-t border-slate-300"><span>TOTAL:</span><span id="receipt-total">$0.00</span></div>
+          <div class="flex justify-between text-[10px] text-slate-500 pt-1"><span>Payment Method:</span><span id="receipt-method">Cash</span></div>
+        </div>
+
+        <div class="text-center pt-3 text-[10px] text-slate-500 space-y-0.5">
+          <p>Thank you for your business!</p>
+          <p>Please come again</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 no-print">
+        <button class="close-modal flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl text-xs transition">Close</button>
+        <button id="btn-print-receipt" class="flex-1 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Print Receipt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CREATE/EDIT SERVICE -->
+  <div id="modal-service-form" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="service-modal-title" class="font-bold text-lg text-white">Create New Service</h3>
+        <button class="close-modal text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="service-form" class="space-y-3 text-xs">
+        <input type="hidden" id="service-form-id">
+        <div>
+          <label class="text-slate-300 font-medium">Service Title</label>
+          <input type="text" id="service-form-name" required placeholder="e.g. Full Haircut & Style" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-300 font-medium">Category</label>
+            <input type="text" id="service-form-category" required placeholder="e.g. Hair & Beauty" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+          <div>
+            <label class="text-slate-300 font-medium">Price ($)</label>
+            <input type="number" step="0.01" id="service-form-price" required placeholder="45.00" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-300 font-medium">Duration (Mins)</label>
+            <input type="number" id="service-form-duration" required placeholder="45" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+          <div>
+            <label class="text-slate-300 font-medium">Primary Staff</label>
+            <select id="service-form-staff" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-slate-300 font-medium">Service Addons (Comma Separated)</label>
+          <input type="text" id="service-form-addons" placeholder="e.g. Shampoo (+$10), Conditioning Treatment (+$15)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+        </div>
+
+        <div class="flex items-center space-x-3 pt-3">
+          <button type="button" class="close-modal flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl transition">Cancel</button>
+          <button type="submit" class="flex-1 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-2.5 rounded-xl transition">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: CREATE APPOINTMENT -->
+  <div id="modal-appointment-form" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-white">Book New Appointment</h3>
+        <button class="close-modal text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="appointment-form" class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-300 font-medium">Select Client</label>
+          <select id="app-form-client" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div>
+          <label class="text-slate-300 font-medium">Select Service</label>
+          <select id="app-form-service" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-300 font-medium">Assigned Staff</label>
+            <select id="app-form-staff" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label class="text-slate-300 font-medium">Time Slot</label>
+            <input type="time" id="app-form-time" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-slate-300 font-medium">Appointment Date</label>
+          <input type="date" id="app-form-date" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+        </div>
+
+        <div class="flex items-center space-x-3 pt-3">
+          <button type="button" class="close-modal flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl transition">Cancel</button>
+          <button type="submit" class="flex-1 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-2.5 rounded-xl transition">Schedule Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: CREATE CUSTOMER -->
+  <div id="modal-customer-form" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-white">Add Customer Profile</h3>
+        <button class="close-modal text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="customer-form" class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-300 font-medium">Full Name</label>
+          <input type="text" id="cust-form-name" required placeholder="Jane Doe" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-300 font-medium">Phone Number</label>
+            <input type="tel" id="cust-form-phone" required placeholder="(555) 000-0000" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+          <div>
+            <label class="text-slate-300 font-medium">Email Address</label>
+            <input type="email" id="cust-form-email" placeholder="jane@example.com" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-slate-300 font-medium">Service Notes / Preferences</label>
+          <textarea id="cust-form-notes" rows="2" placeholder="e.g. Hair color preferences, allergic to latex..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1"></textarea>
+        </div>
+
+        <div class="flex items-center space-x-3 pt-3">
+          <button type="button" class="close-modal flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-xl transition">Cancel</button>
+          <button type="submit" class="flex-1 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold py-2.5 rounded-xl transition">Save Client Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 6: SETTINGS -->
+  <div id="modal-settings" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-lg text-white">Business Settings</h3>
+        <button class="close-modal text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form id="settings-form" class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-300 font-medium">Business Name</label>
+          <input type="text" id="setting-biz-name" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-300 font-medium">Tax Rate (%)</label>
+            <input type="number" step="0.1" id="setting-tax-rate" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+          <div>
+            <label class="text-slate-300 font-medium">Currency Symbol</label>
+            <input type="text" id="setting-currency" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-slate-300 font-medium">Receipt Phone</label>
+          <input type="text" id="setting-biz-phone" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500 mt-1">
+        </div>
+
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+          <button type="button" id="btn-reset-demo-data" class="text-rose-400 hover:text-rose-300 text-xs flex items-center space-x-1">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Reset Demo Data</span>
+          </button>
+          <button type="submit" class="bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold px-4 py-2 rounded-xl transition">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <script>
+    const DEFAULT_STORE = {
+      settings: {
+        bizName: 'Apex Beauty & Wellness Studio',
+        address: '742 Evergreen Terrace, Suite 100',
+        phone: '(555) 382-9102',
+        taxRate: 8.5,
+        currency: '$'
+      },
+      staff: [
+        { id: 'st-1', name: 'Elena Rostova', role: 'Master Stylist', commission: 40, salesToday: 245.00 },
+        { id: 'st-2', name: 'Marcus Vance', role: 'Barber & Tech', commission: 35, salesToday: 180.00 },
+        { id: 'st-3', name: 'Sarah Lin', role: 'Esthetician', commission: 45, salesToday: 320.00 },
+        { id: 'st-4', name: 'David Kim', role: 'Consultant', commission: 50, salesToday: 0.00 }
+      ],
+      services: [
+        { id: 'srv-1', title: 'Haircut & Precision Style', category: 'Hair & Beauty', price: 65.00, duration: 45, staffId: 'st-1', addons: ['Scalp Massage (+$15)', 'Deep Conditioning (+$20)'] },
+        { id: 'srv-2', title: 'Beard Grooming & Hot Towel', category: 'Hair & Beauty', price: 35.00, duration: 30, staffId: 'st-2', addons: ['Facial Scrub (+$12)'] },
+        { id: 'srv-3', title: 'HydraFacial Treatment', category: 'Wellness & Spa', price: 120.00, duration: 60, staffId: 'st-3', addons: ['LED Light Therapy (+$25)'] },
+        { id: 'srv-4', title: 'Tech Repair Diagnostic', category: 'Tech Repair', price: 50.00, duration: 30, staffId: 'st-2', addons: ['Express Turnaround (+$30)'] },
+        { id: 'srv-5', title: '1-on-1 Fitness / Business Consult', category: 'Consulting', price: 90.00, duration: 60, staffId: 'st-4', addons: ['Custom Meal/Action Plan (+$40)'] }
+      ],
+      customers: [
+        { id: 'c-1', name: 'Alice Cooper', phone: '(555) 234-5678', email: 'alice@example.com', totalSpent: 380.00, points: 38, notes: 'Prefers organic shampoos only.' },
+        { id: 'c-2', name: 'Robert Miller', phone: '(555) 876-5432', email: 'robert@example.com', totalSpent: 210.00, points: 21, notes: 'Sensitive skin. Allergic to tea tree oil.' },
+        { id: 'c-3', name: 'Sophia Chen', phone: '(555) 456-7890', email: 'sophia@example.com', totalSpent: 650.00, points: 65, notes: 'VIP Client. Likes sparkling water.' }
+      ],
+      appointments: [
+        { id: 'app-1', customerId: 'c-1', serviceId: 'srv-1', staffId: 'st-1', date: new Date().toISOString().split('T')[0], time: '10:00', status: 'In-Progress' },
+        { id: 'app-2', customerId: 'c-2', serviceId: 'srv-2', staffId: 'st-2', date: new Date().toISOString().split('T')[0], time: '11:30', status: 'Scheduled' },
+        { id: 'app-3', customerId: 'c-3', serviceId: 'srv-3', staffId: 'st-3', date: new Date().toISOString().split('T')[0], time: '14:00', status: 'Scheduled' }
+      ],
+      transactions: [
+        {
+          id: 'TX-1001',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          date: new Date().toISOString().split('T')[0],
+          customerName: 'Alice Cooper',
+          items: [{ title: 'Haircut & Precision Style', price: 65.00, qty: 1, staffName: 'Elena Rostova', addon: 'Scalp Massage (+$15)' }],
+          subtotal: 80.00,
+          tax: 6.80,
+          discount: 0,
+          tip: 15.00,
+          total: 101.80,
+          method: 'Credit Card'
+        }
+      ]
+    };
+
+    // State Variables
+    let appData = JSON.parse(localStorage.getItem('apex_pos_data')) || DEFAULT_STORE;
+    let currentCart = [];
+    let selectedTipPercent = 0;
+    let selectedPaymentMethod = 'Cash';
+    let currentCategoryFilter = 'ALL';
+    let chartSalesCategory = null;
+    let chartStaffCommission = null;
+
+    function saveData() {
+      localStorage.setItem('apex_pos_data', JSON.stringify(appData));
+      renderAllViews();
+    }
+
+    function formatCurrency(num) {
+      return `${appData.settings.currency || '$'}${parseFloat(num || 0).toFixed(2)}`;
+    }
+
+    function initNavigation() {
+      const navBtns = document.querySelectorAll('.nav-btn, .nav-trigger');
+      navBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const target = btn.dataset.target;
+          if (!target) return;
+
+          document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+          const activePanel = document.getElementById(`view-${target}`);
+          if (activePanel) activePanel.classList.remove('hidden');
+
+          // Highlight nav button
+          document.querySelectorAll('.nav-btn').forEach(nb => {
+            if (nb.dataset.target === target) {
+              nb.className = 'nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-brand-400 bg-brand-500/10 border border-brand-500/20';
+            } else {
+              nb.className = 'nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition text-slate-400 hover:bg-slate-800/60 hover:text-white';
+            }
+          });
+
+          if (target === 'reports') renderCharts();
+        });
+      });
+
+      // Mobile Sidebar Toggle
+      document.getElementById('toggle-sidebar-btn').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('-translate-x-full');
+        sidebar.classList.toggle('absolute');
+      });
+    }
+
+    function renderDashboard() {
+      // Calculate Stats
+      const today = new Date().toISOString().split('T')[0];
+      const todayTxs = appData.transactions.filter(t => t.date === today);
+      const totalRev = todayTxs.reduce((sum, t) => sum + t.total, 0);
+      const totalServices = todayTxs.reduce((sum, t) => sum + t.items.length, 0);
+      const avgTicket = todayTxs.length ? (totalRev / todayTxs.length) : 0;
+
+      document.getElementById('stat-revenue').innerText = formatCurrency(totalRev);
+      document.getElementById('stat-services-count').innerText = totalServices;
+      document.getElementById('stat-avg-ticket').innerText = formatCurrency(avgTicket);
+
+      const todayApps = appData.appointments.filter(a => a.date === today);
+      const pendingApps = todayApps.filter(a => a.status === 'Scheduled');
+      document.getElementById('stat-appointments-count').innerText = todayApps.length;
+      document.getElementById('stat-pending-count').innerText = `${pendingApps.length} pending execution`;
+
+      // Render Today's Schedule Queue
+      const scheduleContainer = document.getElementById('dashboard-schedule-list');
+      if (todayApps.length === 0) {
+        scheduleContainer.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">No appointments scheduled for today.</p>`;
+      } else {
+        scheduleContainer.innerHTML = todayApps.map(app => {
+          const client = appData.customers.find(c => c.id === app.customerId) || { name: 'Walk-in Client' };
+          const service = appData.services.find(s => s.id === app.serviceId) || { title: 'Custom Service' };
+          const staff = appData.staff.find(st => st.id === app.staffId) || { name: 'Staff' };
+
+          let statusBadge = '';
+          if (app.status === 'Scheduled') statusBadge = `<span class="px-2 py-0.5 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full font-semibold">Scheduled</span>`;
+          else if (app.status === 'In-Progress') statusBadge = `<span class="px-2 py-0.5 text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full font-semibold">In-Progress</span>`;
+          else statusBadge = `<span class="px-2 py-0.5 text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-semibold">Completed</span>`;
+
+          return `
+            <div class="flex items-center justify-between p-3 bg-slate-800/40 border border-slate-800 rounded-xl hover:border-slate-700 transition">
+              <div class="flex items-center space-x-3">
+                <div class="text-xs font-bold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-lg">${app.time}</div>
+                <div>
+                  <h4 class="text-xs font-bold text-white">${client.name}</h4>
+                  <p class="text-[11px] text-slate-400">${service.title} • <span class="text-slate-300">${staff.name}</span></p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                ${statusBadge}
+                <button onclick="quickStartCheckout('${app.id}')" class="p-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 rounded-lg text-xs" title="Convert to Checkout">
+                  <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Render Top Services
+      const topServicesContainer = document.getElementById('top-services-list');
+      topServicesContainer.innerHTML = appData.services.slice(0, 3).map(s => `
+        <div class="flex items-center justify-between p-2.5 bg-slate-800/30 rounded-xl text-xs">
+          <div>
+            <p class="font-medium text-slate-200">${s.title}</p>
+            <p class="text-[10px] text-slate-400">${s.category} • ${s.duration}m</p>
+          </div>
+          <span class="font-bold text-brand-400">${formatCurrency(s.price)}</span>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderPOS() {
+      // Categories filter bar
+      const categories = ['ALL', ...new Set(appData.services.map(s => s.category))];
+      const categoryContainer = document.getElementById('pos-category-filters');
+      categoryContainer.innerHTML = categories.map(cat => `
+        <button onclick="filterPosCategory('${cat}')" class="px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition ${currentCategoryFilter === cat ? 'bg-brand-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">
+          ${cat}
+        </button>
+      `).join('');
+
+      // Services Grid
+      const searchVal = (document.getElementById('pos-search-input').value || '').toLowerCase();
+      const filtered = appData.services.filter(s => {
+        const matchesCat = currentCategoryFilter === 'ALL' || s.category === currentCategoryFilter;
+        const matchesSearch = s.title.toLowerCase().includes(searchVal) || s.category.toLowerCase().includes(searchVal);
+        return matchesCat && matchesSearch;
+      });
+
+      const grid = document.getElementById('pos-services-grid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-500 text-xs">No services match filter criteria.</div>`;
+      } else {
+        grid.innerHTML = filtered.map(service => {
+          const staff = appData.staff.find(st => st.id === service.staffId);
+          return `
+            <div onclick="addToCart('${service.id}')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 p-4 rounded-2xl cursor-pointer transition flex flex-col justify-between group hover:shadow-lg hover:shadow-brand-500/5">
+              <div class="space-y-1">
+                <div class="flex justify-between items-start">
+                  <span class="text-[10px] uppercase font-bold text-brand-400 tracking-wider bg-brand-500/10 px-2 py-0.5 rounded-md">${service.category}</span>
+                  <span class="text-xs text-slate-400 flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1"></i>${service.duration}m</span>
+                </div>
+                <h4 class="font-bold text-slate-100 text-sm group-hover:text-brand-400 transition">${service.title}</h4>
+                <p class="text-[11px] text-slate-400">Assigned: ${staff ? staff.name : 'Unassigned'}</p>
+              </div>
+              <div class="mt-4 pt-2 border-t border-slate-800/60 flex items-center justify-between">
+                <span class="text-base font-bold text-white">${formatCurrency(service.price)}</span>
+                <span class="p-1.5 bg-slate-800 group-hover:bg-brand-500 group-hover:text-slate-950 text-slate-300 rounded-xl transition"><i data-lucide="plus" class="w-4 h-4"></i></span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Populate POS Customer Dropdown
+      const customerSelect = document.getElementById('pos-customer-select');
+      customerSelect.innerHTML = `<option value="">-- Walk-in Client --</option>` + appData.customers.map(c => `
+        <option value="${c.id}">${c.name} (${c.phone})</option>
+      `).join('');
+
+      renderCart();
+      lucide.createIcons();
+    }
+
+    function filterPosCategory(cat) {
+      currentCategoryFilter = cat;
+      renderPOS();
+    }
+
+    function addToCart(serviceId) {
+      const service = appData.services.find(s => s.id === serviceId);
+      if (!service) return;
+
+      const existingIndex = currentCart.findIndex(item => item.serviceId === serviceId && !item.selectedAddon);
+      if (existingIndex > -1) {
+        currentCart[existingIndex].qty += 1;
+      } else {
+        currentCart.push({
+          cartItemId: 'ci-' + Date.now() + Math.random().toString(36).substr(2, 4),
+          serviceId: service.id,
+          title: service.title,
+          price: service.price,
+          qty: 1,
+          staffId: service.staffId,
+          selectedAddon: ''
+        });
+      }
+      renderCart();
+    }
+
+    function updateCartQty(cartItemId, change) {
+      const item = currentCart.find(i => i.cartItemId === cartItemId);
+      if (!item) return;
+      item.qty += change;
+      if (item.qty <= 0) {
+        currentCart = currentCart.filter(i => i.cartItemId !== cartItemId);
+      }
+      renderCart();
+    }
+
+    function updateCartStaff(cartItemId, staffId) {
+      const item = currentCart.find(i => i.cartItemId === cartItemId);
+      if (item) item.staffId = staffId;
+    }
+
+    function updateCartAddon(cartItemId, addonStr) {
+      const item = currentCart.find(i => i.cartItemId === cartItemId);
+      if (!item) return;
+      item.selectedAddon = addonStr;
+      
+      // Calculate extra cost if addon string contains dollar price
+      let extra = 0;
+      if (addonStr && addonStr.includes('+$')) {
+        const match = addonStr.match(/\+\$(\d+(\.\d+)?)/);
+        if (match) extra = parseFloat(match[1]);
+      }
+      const origService = appData.services.find(s => s.id === item.serviceId);
+      item.price = (origService ? origService.price : item.price) + extra;
+
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items-container');
+      const badge = document.getElementById('cart-badge');
+
+      if (currentCart.length === 0) {
+        container.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
+            <i data-lucide="shopping-cart" class="w-10 h-10 stroke-1 text-slate-600"></i>
+            <p class="text-xs font-medium">Service ticket is empty</p>
+            <p class="text-[10px]">Select services from catalog to start checkout</p>
+          </div>
+        `;
+        badge.classList.add('hidden');
+      } else {
+        badge.innerText = currentCart.reduce((sum, i) => sum + i.qty, 0);
+        badge.classList.remove('hidden');
+
+        container.innerHTML = currentCart.map(item => {
+          const origService = appData.services.find(s => s.id === item.serviceId) || {};
+          const addons = origService.addons || [];
+
+          return `
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3 space-y-2 text-xs">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-bold text-white">${item.title}</h4>
+                  <p class="text-[10px] text-brand-400 font-semibold">${formatCurrency(item.price)} each</p>
+                </div>
+                <button onclick="updateCartQty('${item.cartItemId}', -99)" class="text-slate-500 hover:text-rose-400">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <!-- Addon Selector if available -->
+              ${addons.length > 0 ? `
+                <div>
+                  <select onchange="updateCartAddon('${item.cartItemId}', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-300">
+                    <option value="">-- Optional Addon --</option>
+                    ${addons.map(a => `<option value="${a}" ${item.selectedAddon === a ? 'selected' : ''}>${a}</option>`).join('')}
+                  </select>
+                </div>
+              ` : ''}
+
+              <!-- Staff Selector -->
+              <div class="flex items-center justify-between pt-1 border-t border-slate-700/40">
+                <select onchange="updateCartStaff('${item.cartItemId}', this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-slate-300">
+                  ${appData.staff.map(st => `<option value="${st.id}" ${item.staffId === st.id ? 'selected' : ''}>${st.name}</option>`).join('')}
+                </select>
+
+                <!-- Qty buttons -->
+                <div class="flex items-center space-x-2 bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5">
+                  <button onclick="updateCartQty('${item.cartItemId}', -1)" class="text-slate-400 hover:text-white font-bold">-</button>
+                  <span class="font-bold text-white px-1 text-[11px]">${item.qty}</span>
+                  <button onclick="updateCartQty('${item.cartItemId}', 1)" class="text-slate-400 hover:text-white font-bold">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      calculateCartTotals();
+      lucide.createIcons();
+    }
+
+    function calculateCartTotals() {
+      const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      
+      // Discount
+      const discVal = parseFloat(document.getElementById('pos-discount-input').value || 0);
+      const discType = document.getElementById('pos-discount-type').value;
+      let discountAmount = 0;
+      if (discType === 'percent') {
+        discountAmount = (subtotal * discVal) / 100;
+      } else {
+        discountAmount = discVal;
+      }
+      discountAmount = Math.min(subtotal, discountAmount);
+
+      const subtotalAfterDisc = subtotal - discountAmount;
+      const taxRate = parseFloat(appData.settings.taxRate || 0);
+      const taxAmount = (subtotalAfterDisc * taxRate) / 100;
+
+      // Tip
+      const customTip = parseFloat(document.getElementById('pos-tip-custom').value || 0);
+      let tipAmount = customTip;
+      if (selectedTipPercent > 0) {
+        tipAmount = (subtotalAfterDisc * selectedTipPercent) / 100;
+      }
+
+      const total = subtotalAfterDisc + taxAmount + tipAmount;
+
+      document.getElementById('cart-subtotal').innerText = formatCurrency(subtotal);
+      document.getElementById('cart-tax').innerText = formatCurrency(taxAmount);
+      document.getElementById('tax-rate-display').innerText = taxRate;
+      document.getElementById('cart-discount').innerText = `-${formatCurrency(discountAmount)}`;
+      document.getElementById('cart-tip').innerText = formatCurrency(tipAmount);
+      document.getElementById('cart-total').innerText = formatCurrency(total);
+
+      document.getElementById('btn-proceed-checkout').disabled = currentCart.length === 0;
+
+      return { subtotal, taxAmount, discountAmount, tipAmount, total };
+    }
+
+    function renderAppointments() {
+      const staffFilter = document.getElementById('appointment-staff-filter');
+      staffFilter.innerHTML = `<option value="ALL">All Staff Members</option>` + appData.staff.map(s => `
+        <option value="${s.id}">${s.name}</option>
+      `).join('');
+
+      const grid = document.getElementById('appointments-timeline-grid');
+      const timeSlots = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+      
+      const filterDate = document.getElementById('appointment-date-picker').value || new Date().toISOString().split('T')[0];
+      const selectedStaffFilter = staffFilter.value || 'ALL';
+
+      grid.innerHTML = timeSlots.map(time => {
+        const slotApps = appData.appointments.filter(a => {
+          const matchDate = a.date === filterDate;
+          const matchTime = a.time.startsWith(time.split(':')[0]);
+          const matchStaff = selectedStaffFilter === 'ALL' || a.staffId === selectedStaffFilter;
+          return matchDate && matchTime && matchStaff;
+        });
+
+        return `
+          <div class="flex items-start space-x-4 border-b border-slate-800/60 pb-3">
+            <div class="w-16 text-xs font-bold text-slate-400 py-1">${time}</div>
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 min-h-[48px] bg-slate-950/40 p-2 rounded-xl border border-slate-800/40">
+              ${slotApps.length === 0 ? `<span class="text-[11px] text-slate-600 italic py-1">No bookings</span>` : slotApps.map(app => {
+                const client = appData.customers.find(c => c.id === app.customerId) || { name: 'Client' };
+                const service = appData.services.find(s => s.id === app.serviceId) || { title: 'Service' };
+                const staff = appData.staff.find(s => s.id === app.staffId) || { name: 'Staff' };
+
+                return `
+                  <div class="bg-slate-800 border border-slate-700/80 rounded-xl p-3 flex flex-col justify-between space-y-2">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <h4 class="font-bold text-xs text-white">${client.name}</h4>
+                        <p class="text-[10px] text-brand-400">${service.title}</p>
+                      </div>
+                      <select onchange="updateAppointmentStatus('${app.id}', this.value)" class="bg-slate-900 text-[10px] text-slate-300 border border-slate-700 rounded px-1.5 py-0.5">
+                        <option value="Scheduled" ${app.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                        <option value="In-Progress" ${app.status === 'In-Progress' ? 'selected' : ''}>In-Progress</option>
+                        <option value="Completed" ${app.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        <option value="Cancelled" ${app.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                      </select>
+                    </div>
+                    <div class="text-[10px] text-slate-400 flex justify-between items-center border-t border-slate-700/40 pt-1.5">
+                      <span>Staff: ${staff.name}</span>
+                      <span>Time: ${app.time}</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateAppointmentStatus(appId, newStatus) {
+      const app = appData.appointments.find(a => a.id === appId);
+      if (app) {
+        app.status = newStatus;
+        saveData();
+      }
+    }
+
+    function renderServicesTable() {
+      const tbody = document.getElementById('services-table-body');
+      tbody.innerHTML = appData.services.map(s => {
+        const staff = appData.staff.find(st => st.id === s.staffId);
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 font-bold text-white">${s.title}</td>
+            <td class="py-3 px-4"><span class="bg-slate-800 text-slate-300 text-[10px] px-2.5 py-1 rounded-full border border-slate-700">${s.category}</span></td>
+            <td class="py-3 px-4 text-xs">${s.duration} mins</td>
+            <td class="py-3 px-4 font-bold text-brand-400">${formatCurrency(s.price)}</td>
+            <td class="py-3 px-4 text-xs text-slate-300">${staff ? staff.name : 'Unassigned'}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+              <button onclick="editService('${s.id}')" class="text-slate-400 hover:text-white"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+              <button onclick="deleteService('${s.id}')" class="text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function renderCustomers() {
+      const grid = document.getElementById('customers-cards-grid');
+      const searchVal = (document.getElementById('customer-search-input').value || '').toLowerCase();
+
+      const filtered = appData.customers.filter(c => 
+        c.name.toLowerCase().includes(searchVal) || c.phone.includes(searchVal) || c.email.toLowerCase().includes(searchVal)
+      );
+
+      grid.innerHTML = filtered.map(c => `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-white text-base">${c.name}</h3>
+              <span class="bg-brand-500/10 text-brand-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-brand-500/20">${c.points || 0} pts</span>
+            </div>
+            <p class="text-xs text-slate-400 flex items-center"><i data-lucide="phone" class="w-3.5 h-3.5 mr-1.5 text-slate-500"></i>${c.phone}</p>
+            <p class="text-xs text-slate-400 flex items-center"><i data-lucide="mail" class="w-3.5 h-3.5 mr-1.5 text-slate-500"></i>${c.email || 'N/A'}</p>
+            ${c.notes ? `<div class="bg-slate-800/60 p-2.5 rounded-xl text-[11px] text-slate-300 border border-slate-700/50 mt-2"><strong>Notes:</strong> ${c.notes}</div>` : ''}
+          </div>
+          <div class="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+            <span class="text-slate-400">Total Lifetime Spend:</span>
+            <span class="font-bold text-white">${formatCurrency(c.totalSpent || 0)}</span>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderStaff() {
+      const grid = document.getElementById('staff-cards-grid');
+      grid.innerHTML = appData.staff.map(st => `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-xl flex items-center justify-center font-bold text-sm">
+              ${st.name.charAt(0)}
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">${st.name}</h3>
+              <p class="text-xs text-slate-400">${st.role}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+              <span class="text-[10px] text-slate-400 uppercase">Commission</span>
+              <p class="font-bold text-white mt-0.5">${st.commission}%</p>
+            </div>
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
+              <span class="text-[10px] text-slate-400 uppercase">Sales Today</span>
+              <p class="font-bold text-brand-400 mt-0.5">${formatCurrency(st.salesToday || 0)}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderReports() {
+      // Transaction History
+      const historyTable = document.getElementById('transaction-history-table');
+      if (appData.transactions.length === 0) {
+        historyTable.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500">No transaction records found.</td></tr>`;
+      } else {
+        historyTable.innerHTML = appData.transactions.map(tx => `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 font-mono text-brand-400 font-bold">${tx.id}</td>
+            <td class="py-3 px-4 text-slate-400">${tx.date} ${tx.timestamp}</td>
+            <td class="py-3 px-4 font-medium text-white">${tx.customerName}</td>
+            <td class="py-3 px-4 text-slate-300">${tx.items.map(i => i.title).join(', ')}</td>
+            <td class="py-3 px-4"><span class="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700">${tx.method}</span></td>
+            <td class="py-3 px-4 text-right font-bold text-white">${formatCurrency(tx.total)}</td>
+            <td class="py-3 px-4 text-center">
+              <button onclick="viewReceiptModal('${tx.id}')" class="text-slate-400 hover:text-white"><i data-lucide="receipt" class="w-4 h-4"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+      lucide.createIcons();
+    }
+
+    function renderCharts() {
+      // Sales by Category Chart
+      const catSales = {};
+      appData.transactions.forEach(tx => {
+        tx.items.forEach(item => {
+          const service = appData.services.find(s => s.title === item.title);
+          const cat = service ? service.category : 'General';
+          catSales[cat] = (catSales[cat] || 0) + (item.price * item.qty);
+        });
+      });
+
+      const ctx1 = document.getElementById('chart-sales-category').getContext('2d');
+      if (chartSalesCategory) chartSalesCategory.destroy();
+      chartSalesCategory = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(catSales).length ? Object.keys(catSales) : ['No Data'],
+          datasets: [{
+            data: Object.values(catSales).length ? Object.values(catSales) : [1],
+            backgroundColor: ['#22c55e', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8' } } }
+        }
+      });
+
+      // Staff Commission Chart
+      const staffComms = {};
+      appData.staff.forEach(s => {
+        staffComms[s.name] = (s.salesToday * (s.commission / 100));
+      });
+
+      const ctx2 = document.getElementById('chart-staff-commission').getContext('2d');
+      if (chartStaffCommission) chartStaffCommission.destroy();
+      chartStaffCommission = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(staffComms),
+          datasets: [{
+            label: 'Commission ($)',
+            data: Object.values(staffComms),
+            backgroundColor: '#22c55e'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#94a3b8' } },
+            y: { ticks: { color: '#94a3b8' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function openCheckoutModal() {
+      if (currentCart.length === 0) return;
+      const custSelect = document.getElementById('pos-customer-select');
+      const custObj = appData.customers.find(c => c.id === custSelect.value);
+      
+      document.getElementById('checkout-modal-client-name').innerText = custObj ? custObj.name : 'Walk-in Client';
+      const totals = calculateCartTotals();
+      document.getElementById('checkout-modal-total-amount').innerText = formatCurrency(totals.total);
+
+      document.getElementById('modal-checkout').classList.remove('hidden');
+    }
+
+    function processPayment() {
+      const custSelect = document.getElementById('pos-customer-select');
+      const custObj = appData.customers.find(c => c.id === custSelect.value);
+      const totals = calculateCartTotals();
+
+      const newTx = {
+        id: 'TX-' + Math.floor(1000 + Math.random() * 9000),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toISOString().split('T')[0],
+        customerId: custObj ? custObj.id : null,
+        customerName: custObj ? custObj.name : 'Walk-in Client',
+        items: currentCart.map(item => {
+          const staff = appData.staff.find(st => st.id === item.staffId);
+          return {
+            title: item.title,
+            price: item.price,
+            qty: item.qty,
+            staffName: staff ? staff.name : 'Unassigned',
+            staffId: item.staffId,
+            addon: item.selectedAddon
+          };
+        }),
+        subtotal: totals.subtotal,
+        tax: totals.taxAmount,
+        discount: totals.discountAmount,
+        tip: totals.tipAmount,
+        total: totals.total,
+        method: selectedPaymentMethod
+      };
+
+      // Record Sales to Staff
+      currentCart.forEach(item => {
+        const staff = appData.staff.find(st => st.id === item.staffId);
+        if (staff) {
+          staff.salesToday = (staff.salesToday || 0) + (item.price * item.qty);
+        }
+      });
+
+      // Update Customer Lifetime Spend & Points
+      if (custObj) {
+        custObj.totalSpent = (custObj.totalSpent || 0) + totals.total;
+        custObj.points = (custObj.points || 0) + Math.floor(totals.total / 10);
+      }
+
+      appData.transactions.unshift(newTx);
+      saveData();
+
+      // Clear Cart & Hide Modal
+      currentCart = [];
+      document.getElementById('modal-checkout').classList.add('hidden');
+      
+      // Open Printable Receipt Preview
+      viewReceiptModal(newTx.id);
+    }
+
+    function viewReceiptModal(txId) {
+      const tx = appData.transactions.find(t => t.id === txId);
+      if (!tx) return;
+
+      document.getElementById('receipt-biz-name').innerText = appData.settings.bizName;
+      document.getElementById('receipt-biz-address').innerText = appData.settings.address;
+      document.getElementById('receipt-biz-phone').innerText = `Ph: ${appData.settings.phone}`;
+
+      document.getElementById('receipt-id').innerText = tx.id;
+      document.getElementById('receipt-date').innerText = `${tx.date} ${tx.timestamp}`;
+      document.getElementById('receipt-client').innerText = tx.customerName;
+
+      document.getElementById('receipt-items-list').innerHTML = tx.items.map(i => `
+        <div>
+          <div class="flex justify-between">
+            <span>${i.qty}x ${i.title}</span>
+            <span>${formatCurrency(i.price * i.qty)}</span>
+          </div>
+          ${i.addon ? `<div class="text-[9px] text-slate-500 pl-2">+ ${i.addon}</div>` : ''}
+          <div class="text-[9px] text-slate-500 pl-2">Staff: ${i.staffName}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('receipt-subtotal').innerText = formatCurrency(tx.subtotal);
+      document.getElementById('receipt-tax').innerText = formatCurrency(tx.tax);
+      document.getElementById('receipt-discount').innerText = `-${formatCurrency(tx.discount)}`;
+      document.getElementById('receipt-tip').innerText = formatCurrency(tx.tip);
+      document.getElementById('receipt-total').innerText = formatCurrency(tx.total);
+      document.getElementById('receipt-method').innerText = tx.method;
+
+      document.getElementById('modal-receipt').classList.remove('hidden');
+    }
+
+    function quickStartCheckout(appId) {
+      const app = appData.appointments.find(a => a.id === appId);
+      if (!app) return;
+
+      // Switch to POS tab
+      document.querySelector('[data-target="pos"]').click();
+
+      // Set customer dropdown
+      const custSelect = document.getElementById('pos-customer-select');
+      custSelect.value = app.customerId;
+
+      // Add service to cart
+      addToCart(app.serviceId);
+    }
+
+    function openServiceModal(serviceObj = null) {
+      const modal = document.getElementById('modal-service-form');
+      const staffSelect = document.getElementById('service-form-staff');
+      staffSelect.innerHTML = appData.staff.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+
+      if (serviceObj) {
+        document.getElementById('service-modal-title').innerText = 'Edit Service';
+        document.getElementById('service-form-id').value = serviceObj.id;
+        document.getElementById('service-form-name').value = serviceObj.title;
+        document.getElementById('service-form-category').value = serviceObj.category;
+        document.getElementById('service-form-price').value = serviceObj.price;
+        document.getElementById('service-form-duration').value = serviceObj.duration;
+        document.getElementById('service-form-staff').value = serviceObj.staffId;
+        document.getElementById('service-form-addons').value = (serviceObj.addons || []).join(', ');
+      } else {
+        document.getElementById('service-modal-title').innerText = 'Create New Service';
+        document.getElementById('service-form').reset();
+        document.getElementById('service-form-id').value = '';
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function editService(id) {
+      const s = appData.services.find(item => item.id === id);
+      if (s) openServiceModal(s);
+    }
+
+    function deleteService(id) {
+      if (confirm('Are you sure you want to delete this service?')) {
+        appData.services = appData.services.filter(s => s.id !== id);
+        saveData();
+      }
+    }
+
+    function openAppointmentModal() {
+      const clientSelect = document.getElementById('app-form-client');
+      clientSelect.innerHTML = appData.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+      const serviceSelect = document.getElementById('app-form-service');
+      serviceSelect.innerHTML = appData.services.map(s => `<option value="${s.id}">${s.title} (${formatCurrency(s.price)})</option>`).join('');
+
+      const staffSelect = document.getElementById('app-form-staff');
+      staffSelect.innerHTML = appData.staff.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+
+      document.getElementById('app-form-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('app-form-time').value = '10:00';
+
+      document.getElementById('modal-appointment-form').classList.remove('hidden');
+    }
+
+    function renderAllViews() {
+      document.getElementById('store-name-display').innerText = appData.settings.bizName;
+      renderDashboard();
+      renderPOS();
+      renderAppointments();
+      renderServicesTable();
+      renderCustomers();
+      renderStaff();
+      renderReports();
+    }
+
+    function setupEventListeners() {
+      initNavigation();
+
+      // Date Time Header Update
+      const updateHeaderTime = () => {
+        const now = new Date();
+        document.getElementById('current-date-display').innerText = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        document.getElementById('current-time-display').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      };
+      updateHeaderTime();
+      setInterval(updateHeaderTime, 1000);
+
+      // Close Modals
+      document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.closest('.fixed').classList.add('hidden');
+        });
+      });
+
+      // Quick Express Register Button
+      document.getElementById('quick-checkout-top-btn').addEventListener('click', () => {
+        document.querySelector('[data-target="pos"]').click();
+      });
+
+      // POS Search Filter Event
+      document.getElementById('pos-search-input').addEventListener('input', renderPOS);
+
+      // Customer Search Event
+      document.getElementById('customer-search-input').addEventListener('input', renderCustomers);
+
+      // Discount Inputs Live Change
+      document.getElementById('pos-discount-input').addEventListener('input', calculateCartTotals);
+      document.getElementById('pos-discount-type').addEventListener('change', calculateCartTotals);
+
+      // Tip Presets Handling
+      document.querySelectorAll('.tip-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedTipPercent = parseFloat(btn.dataset.tip);
+          document.getElementById('pos-tip-custom').value = '';
+          calculateCartTotals();
+        });
+      });
+      document.getElementById('pos-tip-custom').addEventListener('input', () => {
+        selectedTipPercent = 0;
+        calculateCartTotals();
+      });
+
+      // Payment Method Buttons Selection
+      document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.remove('border-brand-500', 'bg-brand-500/10'));
+          btn.classList.add('border-brand-500', 'bg-brand-500/10');
+          selectedPaymentMethod = btn.dataset.method;
+        });
+      });
+
+      // Cart Clear
+      document.getElementById('clear-cart-btn').addEventListener('click', () => {
+        currentCart = [];
+        renderCart();
+      });
+
+      // Open Checkout Modal Trigger
+      document.getElementById('btn-proceed-checkout').addEventListener('click', openCheckoutModal);
+
+      // Confirm Payment Trigger
+      document.getElementById('btn-confirm-payment').addEventListener('click', processPayment);
+
+      // Print Receipt Trigger
+      document.getElementById('btn-print-receipt').addEventListener('click', () => {
+        window.print();
+      });
+
+      // Open Service Creation Modal
+      document.getElementById('btn-add-service').addEventListener('click', () => openServiceModal());
+
+      // Save Service Form Submit
+      document.getElementById('service-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('service-form-id').value;
+        const title = document.getElementById('service-form-name').value;
+        const category = document.getElementById('service-form-category').value;
+        const price = parseFloat(document.getElementById('service-form-price').value);
+        const duration = parseInt(document.getElementById('service-form-duration').value);
+        const staffId = document.getElementById('service-form-staff').value;
+        const addonsRaw = document.getElementById('service-form-addons').value;
+        const addons = addonsRaw ? addonsRaw.split(',').map(a => a.trim()) : [];
+
+        if (id) {
+          const s = appData.services.find(item => item.id === id);
+          if (s) {
+            s.title = title; s.category = category; s.price = price; s.duration = duration; s.staffId = staffId; s.addons = addons;
+          }
+        } else {
+          appData.services.push({
+            id: 'srv-' + Date.now(), title, category, price, duration, staffId, addons
+          });
+        }
+        saveData();
+        document.getElementById('modal-service-form').classList.add('hidden');
+      });
+
+      // Open Appointment Modal
+      document.getElementById('btn-add-appointment').addEventListener('click', openAppointmentModal);
+
+      // Save Appointment Form Submit
+      document.getElementById('appointment-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        appData.appointments.push({
+          id: 'app-' + Date.now(),
+          customerId: document.getElementById('app-form-client').value,
+          serviceId: document.getElementById('app-form-service').value,
+          staffId: document.getElementById('app-form-staff').value,
+          date: document.getElementById('app-form-date').value,
+          time: document.getElementById('app-form-time').value,
+          status: 'Scheduled'
+        });
+        saveData();
+        document.getElementById('modal-appointment-form').classList.add('hidden');
+      });
+
+      // Quick Customer Modal Triggers
+      const openCustModal = () => document.getElementById('modal-customer-form').classList.remove('hidden');
+      document.getElementById('btn-quick-add-customer').addEventListener('click', openCustModal);
+      document.getElementById('btn-add-customer-crm').addEventListener('click', openCustModal);
+
+      // Save Customer Form Submit
+      document.getElementById('customer-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newCust = {
+          id: 'c-' + Date.now(),
+          name: document.getElementById('cust-form-name').value,
+          phone: document.getElementById('cust-form-phone').value,
+          email: document.getElementById('cust-form-email').value,
+          notes: document.getElementById('cust-form-notes').value,
+          totalSpent: 0,
+          points: 0
+        };
+        appData.customers.push(newCust);
+        saveData();
+        document.getElementById('modal-customer-form').classList.add('hidden');
+        document.getElementById('customer-form').reset();
+      });
+
+      // Staff Creation
+      document.getElementById('btn-add-staff').addEventListener('click', () => {
+        const name = prompt('Enter staff member name:');
+        if (!name) return;
+        const role = prompt('Enter role/title:', 'Stylist / Specialist');
+        appData.staff.push({
+          id: 'st-' + Date.now(),
+          name,
+          role: role || 'Staff Member',
+          commission: 30,
+          salesToday: 0
+        });
+        saveData();
+      });
+
+      // Settings Modal
+      document.getElementById('open-settings-btn').addEventListener('click', () => {
+        document.getElementById('setting-biz-name').value = appData.settings.bizName;
+        document.getElementById('setting-tax-rate').value = appData.settings.taxRate;
+        document.getElementById('setting-currency').value = appData.settings.currency;
+        document.getElementById('setting-biz-phone').value = appData.settings.phone;
+        document.getElementById('modal-settings').classList.remove('hidden');
+      });
+
+      document.getElementById('settings-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        appData.settings.bizName = document.getElementById('setting-biz-name').value;
+        appData.settings.taxRate = parseFloat(document.getElementById('setting-tax-rate').value);
+        appData.settings.currency = document.getElementById('setting-currency').value;
+        appData.settings.phone = document.getElementById('setting-biz-phone').value;
+        saveData();
+        document.getElementById('modal-settings').classList.add('hidden');
+      });
+
+      // Reset Demo Data
+      document.getElementById('btn-reset-demo-data').addEventListener('click', () => {
+        if (confirm('Reset all sales, customers, and services back to default demo data?')) {
+          localStorage.removeItem('apex_pos_data');
+          appData = DEFAULT_STORE;
+          saveData();
+          document.getElementById('modal-settings').classList.add('hidden');
+        }
+      });
+
+      // Reports CSV Export
+      document.getElementById('btn-export-reports').addEventListener('click', () => {
+        let csv = 'Receipt ID,Date,Time,Client,Subtotal,Tax,Discount,Tip,Total,Method\n';
+        appData.transactions.forEach(t => {
+          csv += `"${t.id}","${t.date}","${t.timestamp}","${t.customerName}",${t.subtotal},${t.tax},${t.discount},${t.tip},${t.total},"${t.method}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `service_pos_sales_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+      });
+    }
+
+    /* Mount Application on Window Load */
+    window.onload = function() {
+      renderAllViews();
+      setupEventListeners();
+    };
+  </script>
+</body>
+</html>
